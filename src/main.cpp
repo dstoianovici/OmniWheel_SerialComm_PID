@@ -17,6 +17,13 @@ Dan Stoianovici 9/21/19
 #include <Arduino.h>
 #include <CytronMotorDriver.h>
 #include <Analog_Pot.h>
+#include <Serial_Parser.h>
+
+//Serial Comms
+#define BAUD_RATE 115200
+#define DELIM ','
+#define NUM_PARAMS 4
+
 
 //Motor Pins
 #define mot0_dir 2
@@ -40,6 +47,8 @@ Dan Stoianovici 9/21/19
 #define range_M 1023 //Max val of pot
 #define range_m 0 //Min Val of pot
 
+//Create Serial Parser object
+Serial_Parser parser(DELIM);
 
 //Create motor objects
 CytronMD motor0(PWM_DIR, mot0_en, mot0_dir);
@@ -47,48 +56,86 @@ CytronMD motor1(PWM_DIR, mot1_en, mot1_dir);
 CytronMD motor2(PWM_DIR, mot2_en, mot2_dir);
 CytronMD motor3(PWM_DIR, mot3_en, mot3_dir);
 
+//Potetntiometer
 Analog_Pot pot0(pot_0,range_m,range_M);
 Analog_Pot pot1(pot_1,range_m,range_M);
 Analog_Pot pot2(pot_2,range_m,range_M);
 Analog_Pot pot3(pot_3,range_m,range_M);
 
+//Global Vals for PID control
+int setpoints[4];
+
+//PID Vars
+double kP[4];
+double kI[4];
+double kD[4];
+
+unsigned long currentTime, previousTime;
+double elapsedTime, error,cumError,rateError;
+
+
+
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(BAUD_RATE);
 
   //Set mode for motor pins
-  pinMode(mot0_dir, OUTPUT);
-  pinMode(mot0_en, OUTPUT);
-  pinMode(mot1_dir, OUTPUT);
-  pinMode(mot1_en, OUTPUT);
-  pinMode(mot2_dir, OUTPUT);
-  pinMode(mot2_en, OUTPUT);
-  pinMode(mot3_dir, OUTPUT);
-  pinMode(mot3_en, OUTPUT);
+  // pinMode(mot0_dir, OUTPUT);
+  // pinMode(mot0_en, OUTPUT);
+  // pinMode(mot1_dir, OUTPUT);
+  // pinMode(mot1_en, OUTPUT);
+  // pinMode(mot2_dir, OUTPUT);
+  // pinMode(mot2_en, OUTPUT);
+  // pinMode(mot3_dir, OUTPUT);
+  // pinMode(mot3_en, OUTPUT);
 
-  Serial.println("Initialized");
-
+  Serial.println("Initialized");\
 }
 
 void loop() {
-  delay(500);
 
-  Serial.println();
-  Serial.print(pot0.GetVal());
-  Serial.print(",");
-  Serial.print(pot1.GetVal());
-  Serial.print(",");
-  Serial.print(pot2.GetVal());
-  Serial.print(",");
-  Serial.println(pot3.GetVal());
-
-
-  motor0.setSpeed(pot0.GetVal2PWM());
-  motor1.setSpeed(pot1.GetVal2PWM());
-  motor2.setSpeed(pot2.GetVal2PWM());
-  motor3.setSpeed(pot3.GetVal2PWM());
+  int setpoint[NUM_PARAMS]; //array of 100 intergers
+  int param_check = parser.GetParams(setpoint);
 
 
 
 
+
+
+  // Serial.println();
+  // Serial.print(pot0.GetVal());
+  // Serial.print(",");
+  // Serial.print(pot1.GetVal());
+  // Serial.print(",");
+  // Serial.print(pot2.GetVal());
+  // Serial.print(",");
+  // Serial.println(pot3.GetVal());
+  //
+  //
+  // motor0.setSpeed(pot0.GetVal2PWM());
+  // motor1.setSpeed(pot1.GetVal2PWM());
+  // motor2.setSpeed(pot2.GetVal2PWM());
+  // motor3.setSpeed(pot3.GetVal2PWM());
+
+
+
+
+}
+
+int computePID(int setpoint, int state, int channel ){
+  currentTime[channel] = millis();
+  elapsedTime[channel] = currentTime[channel]-previousTime[channel];
+
+  error[channel] = setpoint - state;
+  cumError[channel] += error[channel]*
+
+
+
+
+
+
+
+  previousTime = currentTime;
+
+  return out;
 }
