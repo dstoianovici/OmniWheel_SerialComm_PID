@@ -23,7 +23,7 @@ Dan Stoianovici 9/21/19
 #define BAUD_RATE 115200
 #define DELIM ','
 #define NUM_PARAMS 4
-
+#define NUM_MOTORS 4
 
 //Motor Pins
 #define mot0_dir 2
@@ -46,6 +46,8 @@ Dan Stoianovici 9/21/19
 
 #define range_M 1023 //Max val of pot
 #define range_m 0 //Min Val of pot
+
+#define DEAD_BAND 5 //deadband for PID
 
 //Create Serial Parser object
 Serial_Parser parser(DELIM);
@@ -70,72 +72,74 @@ double kP[4];
 double kI[4];
 double kD[4];
 
-unsigned long currentTime, previousTime;
-double elapsedTime, error,cumError,rateError;
 
 
+unsigned long currentTime[NUM_MOTORS], previousTime[NUM_MOTORS];
+double elapsedTime[NUM_MOTORS], error[NUM_MOTORS],cumError[NUM_MOTORS],rateError[NUM_MOTORS], lastError[NUM_MOTORS];
+
+
+//PID function Prototype
+double computePID(int setpoint, int state, int channel,int deadband);
 
 
 void setup() {
   Serial.begin(BAUD_RATE);
-
-  //Set mode for motor pins
-  // pinMode(mot0_dir, OUTPUT);
-  // pinMode(mot0_en, OUTPUT);
-  // pinMode(mot1_dir, OUTPUT);
-  // pinMode(mot1_en, OUTPUT);
-  // pinMode(mot2_dir, OUTPUT);
-  // pinMode(mot2_en, OUTPUT);
-  // pinMode(mot3_dir, OUTPUT);
-  // pinMode(mot3_en, OUTPUT);
-
   Serial.println("Initialized");\
+
 }
 
 void loop() {
 
   int setpoint[NUM_PARAMS]; //array of 100 intergers
   int param_check = parser.GetParams(setpoint);
+  //if (param_check == NUM_PARAMS){
+    double out0 = computePID(setpoint[0], pot0.GetVal(), 0, DEAD_BAND);
+    double out1 = computePID(setpoint[1], pot1.GetVal(), 1, DEAD_BAND);
+    double out2 = computePID(setpoint[2], pot2.GetVal(), 2, DEAD_BAND);
+    double out3= computePID(setpoint[3], pot3.GetVal(), 3, DEAD_BAND);
 
+    motor0.setSpeed(100);
+    // motor1.setSpeed(out1);
+    // motor2.setSpeed(out2);
+    // motor3.setSpeed(out3);
 
+    Serial.println(out0);
+    Serial.println(setpoint[0]);
+    Serial.println(pot0.GetVal());
+    Serial.println(error[0]);
+    delay(500);
 
-
-
-
-  // Serial.println();
-  // Serial.print(pot0.GetVal());
-  // Serial.print(",");
-  // Serial.print(pot1.GetVal());
-  // Serial.print(",");
-  // Serial.print(pot2.GetVal());
-  // Serial.print(",");
-  // Serial.println(pot3.GetVal());
-  //
-  //
-  // motor0.setSpeed(pot0.GetVal2PWM());
-  // motor1.setSpeed(pot1.GetVal2PWM());
-  // motor2.setSpeed(pot2.GetVal2PWM());
-  // motor3.setSpeed(pot3.GetVal2PWM());
-
-
-
-
+  //}
+  //else{
+    // motor0.setSpeed(0);
+    // motor1.setSpeed(0);
+    // motor2.setSpeed(0);
+    // motor3.setSpeed(0);
+//  }
 }
 
-int computePID(int setpoint, int state, int channel ){
+
+double computePID(int setpoint, int state, int channel,int deadband){
+
   currentTime[channel] = millis();
   elapsedTime[channel] = currentTime[channel]-previousTime[channel];
-
   error[channel] = setpoint - state;
-  cumError[channel] += error[channel]*
+
+  if(error[channel] >= deadband){
+    cumError[channel] += error[channel]*elapsedTime[channel];
+    rateError[channel] = (error[channel]-lastError[channel])/elapsedTime[channel];
+
+    double out = kP[channel]*error[channel] + kI[channel]*cumError[channel] + kD[channel]*rateError[channel];
 
 
 
+    lastError[channel] = error[channel];
+    previousTime[channel] = currentTime[channel];
 
+    return out;
+  }
 
-
-
-  previousTime = currentTime;
-
-  return out;
+  else{
+    return 0; //Do not power motor for small error
+  }
 }
