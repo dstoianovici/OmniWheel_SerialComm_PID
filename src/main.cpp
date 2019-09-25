@@ -68,18 +68,18 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[4];
 
 //PID Vars
-double kP[4];
-double kI[4];
-double kD[4];
+double kP[4] = {1,1,1,1};
+double kI[4] = {0,0,0,0};
+double kD[4] = {.2,.2,.2,.2};
 
 
 
-unsigned long currentTime[NUM_MOTORS], previousTime[NUM_MOTORS];
-double elapsedTime[NUM_MOTORS], error[NUM_MOTORS],cumError[NUM_MOTORS],rateError[NUM_MOTORS], lastError[NUM_MOTORS];
+unsigned long currentTime[NUM_MOTORS], previousTime[NUM_MOTORS], elapsedTime[NUM_MOTORS];
+double  error[NUM_MOTORS],cumError[NUM_MOTORS],rateError[NUM_MOTORS], lastError[NUM_MOTORS];
 
 
 //PID function Prototype
-double computePID(int setpoint, int state, int channel,int deadband);
+int computePID(int setpoint, int state, int channel,int deadband);
 
 
 void setup() {
@@ -93,12 +93,12 @@ void loop() {
   int setpoint[NUM_PARAMS]; //array of 100 intergers
   int param_check = parser.GetParams(setpoint);
   //if (param_check == NUM_PARAMS){
-    double out0 = computePID(setpoint[0], pot0.GetVal(), 0, DEAD_BAND);
-    double out1 = computePID(setpoint[1], pot1.GetVal(), 1, DEAD_BAND);
-    double out2 = computePID(setpoint[2], pot2.GetVal(), 2, DEAD_BAND);
-    double out3= computePID(setpoint[3], pot3.GetVal(), 3, DEAD_BAND);
+    int out0 = computePID(setpoint[0], pot0.GetVal(), 0, DEAD_BAND);
+    int out1 = computePID(setpoint[1], pot1.GetVal(), 1, DEAD_BAND);
+    int out2 = computePID(setpoint[2], pot2.GetVal(), 2, DEAD_BAND);
+    int out3= computePID(setpoint[3], pot3.GetVal(), 3, DEAD_BAND);
 
-    motor0.setSpeed(100);
+    motor0.setSpeed(int16(out0));
     // motor1.setSpeed(out1);
     // motor2.setSpeed(out2);
     // motor3.setSpeed(out3);
@@ -129,8 +129,7 @@ double computePID(int setpoint, int state, int channel,int deadband){
     cumError[channel] += error[channel]*elapsedTime[channel];
     rateError[channel] = (error[channel]-lastError[channel])/elapsedTime[channel];
 
-    double out = kP[channel]*error[channel] + kI[channel]*cumError[channel] + kD[channel]*rateError[channel];
-
+    double out =int(kP[channel]*error[channel] + kI[channel]*cumError[channel] + kD[channel]*rateError[channel]);
 
 
     lastError[channel] = error[channel];
