@@ -17,7 +17,7 @@ int* Serial_Parser::GetParams(int* nums){
   int i = 0; // itterator for nums array
   int endstring_flag = 1; //Flag for end of string object processing
   int range_flag = 0;
-  int* output;
+  int* output; //Slot 0 for
 
   if (Serial.available() > 0){
     py_data = Serial.readString();
@@ -27,7 +27,7 @@ int* Serial_Parser::GetParams(int* nums){
 
       if(index == -1){//No more delimiter
         nums[i] = py_data.toInt();
-        if(_range_M < nums[i] ||nums[i] < _range_m){range_flag = 1;}
+        if(_range_M < nums[i] ||nums[i] < _range_m) range_flag = 1;
         i++;
         endstring_flag = 0;
       }
@@ -36,7 +36,7 @@ int* Serial_Parser::GetParams(int* nums){
         sub_string = py_data.substring(0,index);
         py_data.remove(0,index+1);
         nums[i] = sub_string.toInt();
-        if(_range_M < nums[i] ||nums[i] < _range_m){range_flag = 1;}
+        if(_range_M < nums[i] ||nums[i] < _range_m) range_flag = 1;
         i++;
         endstring_flag = 1;
       }
@@ -45,6 +45,7 @@ int* Serial_Parser::GetParams(int* nums){
   else{
     i = 0;
     output[0] = 0;
+    output[1] = 0;
     return output; //return 0 if
   }
 
