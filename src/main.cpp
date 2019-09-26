@@ -24,6 +24,7 @@ Dan Stoianovici 9/21/19
 #define DELIM ','
 #define NUM_PARAMS 4
 #define NUM_MOTORS 4
+#define PID_FREQ 30
 
 //Motor Pins
 #define mot0_dir 2
@@ -68,9 +69,9 @@ int setpoints[4], setpoints_old[4] = {0};
 
 
 //PID Vars
-float kP[4] = {1.5,1,1,1};
-float kI[4] = {0.2,0,0,0};
-float kD[4] = {0.7,0,0,0};
+float kP[4] = {1.1,1,1,1};
+float kI[4] = {0.4,0,0,0};
+float kD[4] = {0.4,0,0,0};
 
 float deadband = 5.0;
 
@@ -137,7 +138,7 @@ void loop() {
       Serial.print("Output: ");
       Serial.println(out0);
       Serial.println();
-      delay(500);
+      delay(1000/PID_FREQ);
     }
     else;
   }
