@@ -6,14 +6,16 @@
 class Serial_Parser
 {
   public:
-    Serial_Parser(char delimiter);
+    Serial_Parser(char delimiter, int range_M, int range_m);
     // int GetNumParams();
-    int GetParams(int* nums);
+    int* GetParams(int* nums);
 
 
   private:
     // long _baud_rate;
     char _delimiter;
+    int _range_M;
+    int _range_m;
 
 };
 
