@@ -47,8 +47,6 @@ Dan Stoianovici 9/21/19
 #define range_M 1023 //Max val of pot
 #define range_m 0 //Min Val of pot
 
-#define DEAD_BAND 5 //deadband for PID
-
 //Create Serial Parser object
 Serial_Parser parser(DELIM);
 
@@ -66,20 +64,23 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 
 //Global Vals for PID control
 int setpoints[4];
+int setpoints_old[4];
 
 //PID Vars
-double kP[4] = {1,1,1,1};
-double kI[4] = {0,0,0,0};
-double kD[4] = {.2,.2,.2,.2};
+float kP[4] = {1,1,1,1};
+float kI[4] = {0.05,0,0,0};
+float kD[4] = {0.2,0,0,0};
+
+float deadband = 5.0;
 
 
-
-unsigned long currentTime[NUM_MOTORS], previousTime[NUM_MOTORS], elapsedTime[NUM_MOTORS];
-double  error[NUM_MOTORS],cumError[NUM_MOTORS],rateError[NUM_MOTORS], lastError[NUM_MOTORS];
+float volatile currentTime[NUM_MOTORS], previousTime[NUM_MOTORS];
+float volatile elapsedTime[NUM_MOTORS];
+float volatile error[NUM_MOTORS] = {0},cumError[NUM_MOTORS] = {0,0,0,0},rateError[NUM_MOTORS]={0,0,0,0}, lastError[NUM_MOTORS]{0,0,0,0};
 
 
 //PID function Prototype
-int computePID(int setpoint, int state, int channel,int deadband);
+float computePID(int setpoint, int state, int channel,float deadband);
 
 
 void setup() {
@@ -90,55 +91,69 @@ void setup() {
 
 void loop() {
 
-  int setpoint[NUM_PARAMS]; //array of 100 intergers
-  int param_check = parser.GetParams(setpoint);
-  //if (param_check == NUM_PARAMS){
-    int out0 = computePID(setpoint[0], pot0.GetVal(), 0, DEAD_BAND);
-    int out1 = computePID(setpoint[1], pot1.GetVal(), 1, DEAD_BAND);
-    int out2 = computePID(setpoint[2], pot2.GetVal(), 2, DEAD_BAND);
-    int out3= computePID(setpoint[3], pot3.GetVal(), 3, DEAD_BAND);
+  int setpoint[NUM_PARAMS]; //array of intergers corresponting to number of parameters neededs
+  int param_check = parser.GetParams(setpoint); //Pull in setpoints from serial parser
 
-    motor0.setSpeed(int16(out0));
-    // motor1.setSpeed(out1);
-    // motor2.setSpeed(out2);
-    // motor3.setSpeed(out3);
+  for(int i=0;i<4;i++){
+    setpoints_old[i] = setpoints[i];
+  }
 
-    Serial.println(out0);
-    Serial.println(setpoint[0]);
-    Serial.println(pot0.GetVal());
-    Serial.println(error[0]);
-    delay(500);
+  int out0 = computePID(setpoint[0], pot0.GetVal(), 0, deadband);
+  // int out1 = computePID(setpoint[1], pot1.GetVal(), 1, DEAD_BAND);
+  // int out2 = computePID(setpoint[2], pot2.GetVal(), 2, DEAD_BAND);
+  // int out3= computePID(setpoint[3], pot3.GetVal(), 3, DEAD_BAND);
 
-  //}
-  //else{
-    // motor0.setSpeed(0);
-    // motor1.setSpeed(0);
-    // motor2.setSpeed(0);
-    // motor3.setSpeed(0);
-//  }
+  motor0.setSpeed(out0);
+  // motor1.setSpeed(out1);
+  // motor2.setSpeed(out2);
+  // motor3.setSpeed(out3);
+
+  Serial.print("Elapsed Time: ");
+  Serial.println(elapsedTime[0]);
+  Serial.print("Setpoint and State: ");
+  Serial.print(setpoint[0]);
+  Serial.print(",");
+  Serial.println(pot0.GetVal());
+  Serial.print("Error: ");
+  Serial.println(error[0]);
+  Serial.print("Cumulative Error: ");
+  Serial.println(cumError[0]);
+  Serial.print("Output: ");
+  Serial.println(out0);
+  Serial.println();
+  delay(500);
+
+  if(param_check != NUM_PARAMS){
+    if(param_check == 0) Serial.println("nothing recieved");
+    else{
+      Serial.println("too many params");
+      for(int i=0;i<4;i++){
+        setpoints[i] = setpoints_old[i];
+      }
+    }
+  }
+
 }
 
-
-double computePID(int setpoint, int state, int channel,int deadband){
+float computePID(int setpoint, int state, int channel,float _deadband){
 
   currentTime[channel] = millis();
-  elapsedTime[channel] = currentTime[channel]-previousTime[channel];
-  error[channel] = setpoint - state;
+  elapsedTime[channel] = (currentTime[channel]-previousTime[channel])/1000;
 
-  if(error[channel] >= deadband){
-    cumError[channel] += error[channel]*elapsedTime[channel];
-    rateError[channel] = (error[channel]-lastError[channel])/elapsedTime[channel];
+  error[channel] = float(setpoint - state);
+  if(abs(error[channel]) <= _deadband){ error[channel] = 0;} //This statement is always true? Even though it cannot be.
+  else;
 
-    double out =int(kP[channel]*error[channel] + kI[channel]*cumError[channel] + kD[channel]*rateError[channel]);
+  cumError[channel] += error[channel]*elapsedTime[channel];
+  // if (abs(cumError[channel]) > 3000){ cumError[channel] = 0;}
+  // else;
 
+  rateError[channel] = (error[channel]-lastError[channel])/elapsedTime[channel];
 
-    lastError[channel] = error[channel];
-    previousTime[channel] = currentTime[channel];
+  float out = kP[channel]*error[channel] + kI[channel]*cumError[channel] + kD[channel]*rateError[channel];
 
-    return out;
-  }
+  lastError[channel] = error[channel];
+  previousTime[channel] = currentTime[channel];
 
-  else{
-    return 0; //Do not power motor for small error
-  }
+  return -out;
 }
