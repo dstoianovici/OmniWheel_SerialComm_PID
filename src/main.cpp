@@ -70,9 +70,9 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT}, setpoints_old[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT};
 
 //PID Vars
-float kP[4] = {1.1,1.2,1,1};
-float kI[4] = {0.4,.5,0,0};
-float kD[4] = {0.4,.5,0,0};
+float kP[4] = {1.1,1.1,1.1,1.1};
+float kI[4] = {0.4,.4,.4,.4};
+float kD[4] = {0.7,.7,.7,.7};
 
 float deadband = 5.0;
 
@@ -92,8 +92,8 @@ float volatile cumError_hist3[hist_length];
 //PID function Prototype
 float computePID(int setpoint, int state, int channel,float _deadband);
 float bound(float val, float range);
-// int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _deadband);
-// float average(float* arr, int len);
+int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _deadband);
+float average(float* arr, int len);
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -107,7 +107,7 @@ void loop() {
   int* param_checks = parser.GetParams(setpoints); //Pull in setpoints from serial parser
 
    if(param_checks[1] != 0){
-     Serial.println("params out of range");
+     //Serial.println("params out of range");
      for(int i=0;i<NUM_PARAMS;i++){
        setpoints[i] = setpoints_old[i]; // Will reset to midpoint if these
      }
@@ -115,9 +115,9 @@ void loop() {
    }
 
    else if(param_checks[0] != NUM_PARAMS){
-     if(param_checks[0] == 0) Serial.println("nothing recieved");
+     if(param_checks[0] == 0) PID_flag = 1; //Serial.println("nothing recieved");
      else{
-        Serial.println("params do not match");
+        //Serial.println("params do not match");
         PID_flag = 0;
       }
    }
@@ -128,41 +128,53 @@ void loop() {
       }
 
 
-      // int out0 = computePID(setpoints[0], pot0.GetVal(), 0, deadband);
-      int out1 = bound(computePID(setpoints[1], pot1.GetVal(), 1, deadband),35); //Bounts output to 0 if between +-35
-      // int out2 = computePID(setpoints[2], pot2.GetVal(), 2, deadband);
-      // int out3= computePID(setpoints[3], pot3.GetVal(), 3, deadband);
+      int out0 = computePID(setpoints[0], pot0.GetVal(), 0, deadband);
+      // int out1 = bound(computePID(setpoints[1], pot1.GetVal(), 1, deadband),35); //Bounts output to 0 if between +-35
+      int out1 = computePID(setpoints[1], pot1.GetVal(), 1, deadband);
+      int out2 = computePID(setpoints[2], pot2.GetVal(), 2, deadband);
+      int out3= computePID(setpoints[3], pot3.GetVal(), 3, deadband);
 
-      // int out0_flag = Error_Hist(cumError[0], cumError_hist0, hist_length, iter, deadband);
-      // int out1_flag = Error_Hist(cumError[1], cumError_hist1, hist_length, iter, deadband);
-      // int out2_flag = Error_Hist(cumError[2], cumError_hist2, hist_length, iter, deadband);
-      // int out3_flag = Error_Hist(cumError[3], cumError_hist3, hist_length, iter, deadband);
+      int out0_flag = Error_Hist(cumError[0], cumError_hist0, hist_length, iter, deadband);
+      int out1_flag = Error_Hist(cumError[1], cumError_hist1, hist_length, iter, deadband);
+      int out2_flag = Error_Hist(cumError[2], cumError_hist2, hist_length, iter, deadband);
+      int out3_flag = Error_Hist(cumError[3], cumError_hist3, hist_length, iter, deadband);
 
-      // iter++;
-      // if(hist_length<=iter) iter = 0;
+      iter++;
+      if(hist_length<=iter) iter = 0;
 
-      // if(out0_flag == 1) out0 = 0;
-      // if(out1_flag == 1) out1 = 0;
-      // if(out2_flag == 1) out2 = 0;
-      // if(out3_flag == 1) out3 = 0;
+      int output0;
+      int output1;
+      int output2;
+      int output3;
 
-      // motor0.setSpeed(out0);
-      motor1.setSpeed(out1);
-      // motor2.setSpeed(out2);
-      // motor3.setSpeed(out3);
+      if(out0_flag == 1) output0 = 0;
+      else output0 = out0;
+      if(out1_flag == 1) output1 = 0;
+      else output1 = out1;
+      if(out2_flag == 1) output2 = 0;
+      else output2 = out2;
+      if(out3_flag == 1) output3 = 0;
+      else output3 = out3;
 
+      motor0.setSpeed(output0);
+      motor1.setSpeed(output1);
+      motor2.setSpeed(output2);
+      motor3.setSpeed(output3);
+
+      // Serial.print("output flag: ");
+      // Serial.println(out0_flag);
       Serial.print("Elapsed Time: ");
-      Serial.println(elapsedTime[1]);
+      Serial.println(elapsedTime[0]);
       Serial.print("Setpoint and State: ");
-      Serial.print(setpoints[1]);
+      Serial.print(setpoints[0]);
       Serial.print(",");
-      Serial.println(pot1.GetVal());
+      Serial.println(pot0.GetVal());
       Serial.print("Error: ");
-      Serial.println(error[1]);
+      Serial.println(error[0]);
       Serial.print("Cumulative Error: ");
-      Serial.println(cumError[1]);
+      Serial.println(cumError[0]);
       Serial.print("Output: ");
-      Serial.println(out1);
+      Serial.println(output0);
       Serial.println();
       delay(1000/PID_FREQ);
     }
@@ -199,22 +211,22 @@ float bound(float val, float range){
   }
   return out;
 }
-// float average(float* arr, int len){
-//   float sum = 0;
-//   for(int i=0; i<len; i++){
-//     sum += arr[i];
-//   }
-//   float avrg = sum/len;
-//   return avrg;
-// }
+float average(float* arr, int len){
+  float sum = 0;
+  for(int i=0; i<len; i++){
+    sum += arr[i];
+  }
+  float avrg = sum/len;
+  return avrg;
+}
 
-// int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _deadband){
-//     int flag = 0;
-//     Error_Hist[_iter] = Error;
-//     float avg = average(Error_Hist, hist_size);
-//
-//     if(abs(avg - Error)<deadband) flag = 1;
-//     else flag = 0;
-//
-//     return flag;
-// }
+int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _deadband){
+    int flag = 0;
+    Error_Hist[_iter] = Error;
+    float avg = average(Error_Hist, hist_size);
+
+    if(abs(avg - Error)<deadband) flag = 1;
+    else flag = 0;
+
+    return flag;
+}
