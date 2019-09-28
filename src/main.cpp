@@ -70,9 +70,9 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT}, setpoints_old[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT};
 
 //PID Vars
-float kP[4] = {1.1,1.1,1.1,1.1};
-float kI[4] = {0.4,.4,.4,.4};
-float kD[4] = {0.7,.7,.7,.7};
+float kP[4] = {1.2,1.2,1.2,1.2};
+float kI[4] = {0.5,.5,.5,.5};
+float kD[4] = {1.0,1.0,1.0,1.0};
 
 float deadband = 5.0;
 
@@ -97,7 +97,20 @@ float average(float* arr, int len);
 
 void setup() {
   Serial.begin(BAUD_RATE);
-  Serial.println("Initialized");\
+  pinMode(13,OUTPUT);
+  delay(5000);
+  digitalWrite(13,HIGH);
+  delay(500);
+  digitalWrite(13,LOW);
+  delay(100);
+  digitalWrite(13,HIGH);
+  delay(100);
+  digitalWrite(13,LOW);
+  delay(800);
+  digitalWrite(13,HIGH);
+  delay(500);
+  digitalWrite(13,LOW);
+  //Serial.println("Initialized");
 
 }
 
@@ -164,17 +177,17 @@ void loop() {
       // Serial.print("output flag: ");
       // Serial.println(out0_flag);
       Serial.print("Elapsed Time: ");
-      Serial.println(elapsedTime[0]);
+      Serial.println(elapsedTime[2]);
       Serial.print("Setpoint and State: ");
-      Serial.print(setpoints[0]);
+      Serial.print(setpoints[2]);
       Serial.print(",");
-      Serial.println(pot0.GetVal());
+      Serial.println(pot2.GetVal());
       Serial.print("Error: ");
-      Serial.println(error[0]);
+      Serial.println(error[2]);
       Serial.print("Cumulative Error: ");
-      Serial.println(cumError[0]);
+      Serial.println(cumError[2]);
       Serial.print("Output: ");
-      Serial.println(output0);
+      Serial.println(output2);
       Serial.println();
       delay(1000/PID_FREQ);
     }
