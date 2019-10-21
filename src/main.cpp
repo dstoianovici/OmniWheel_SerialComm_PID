@@ -70,11 +70,12 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT}, setpoints_old[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT};
 
 //PID Vars
-float kP[4] = {1.2,1.2,1.2,1.2};
-float kI[4] = {0.5,.5,.5,.5};
-float kD[4] = {1.0,1.0,1.0,1.0};
+float kP[4] = {1.9,1.9,1.9,1.9};
+// float kI[4] = {0,0,0,0};
+float kI[4] = {0.2,.2,.2,.2};
+float kD[4] = {0.8,0.8,0.8,0.8};
 
-float deadband = 5.0;
+float deadband = 7.0;
 
 
 float volatile currentTime[NUM_MOTORS], previousTime[NUM_MOTORS], elapsedTime[NUM_MOTORS];
@@ -83,11 +84,15 @@ float volatile error[NUM_MOTORS]={0,0,0,0}, cumError[NUM_MOTORS]={0,0,0,0}, rate
 const int hist_length = 60;
 int iter = 0;
 
-float volatile cumError_hist0[hist_length];
-float volatile cumError_hist1[hist_length];
-float volatile cumError_hist2[hist_length];
-float volatile cumError_hist3[hist_length];
+float  cumError_hist0[hist_length];
+float  cumError_hist1[hist_length];
+float  cumError_hist2[hist_length];
+float  cumError_hist3[hist_length];
 
+// float volatile cumError_hist0[hist_length];
+// float volatile cumError_hist1[hist_length];
+// float volatile cumError_hist2[hist_length];
+// float volatile cumError_hist3[hist_length];
 
 //PID function Prototype
 float computePID(int setpoint, int state, int channel,float _deadband);
@@ -96,20 +101,20 @@ int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _
 float average(float* arr, int len);
 
 void setup() {
-  Serial.begin(BAUD_RATE);
-  pinMode(13,OUTPUT);
-  delay(5000);
-  digitalWrite(13,HIGH);
-  delay(500);
-  digitalWrite(13,LOW);
-  delay(100);
-  digitalWrite(13,HIGH);
-  delay(100);
-  digitalWrite(13,LOW);
-  delay(800);
-  digitalWrite(13,HIGH);
-  delay(500);
-  digitalWrite(13,LOW);
+  // Serial.begin(BAUD_RATE);
+  // pinMode(13,OUTPUT);
+  // delay(5000);
+  // digitalWrite(13,HIGH);
+  // delay(500);
+  // digitalWrite(13,LOW);
+  // delay(100);
+  // digitalWrite(13,HIGH);
+  // delay(100);
+  // digitalWrite(13,LOW);
+  // delay(800);
+  // digitalWrite(13,HIGH);
+  // delay(500);
+  // digitalWrite(13,LOW);
   //Serial.println("Initialized");
 
 }
@@ -119,7 +124,7 @@ void loop() {
   //int setpoint[NUM_PARAMS]; //array of intergers corresponting to number of parameters neededs
   int* param_checks = parser.GetParams(setpoints); //Pull in setpoints from serial parser
 
-   if(param_checks[1] != 0){
+   if(param_checks[1] != 0){ // Parameters out of range
      //Serial.println("params out of range");
      for(int i=0;i<NUM_PARAMS;i++){
        setpoints[i] = setpoints_old[i]; // Will reset to midpoint if these
@@ -136,6 +141,12 @@ void loop() {
    }
 
    if (PID_flag == 1){//If serial Value are ok
+      if(param_checks[0] == NUM_PARAMS){
+        for(int i=0;i<NUM_PARAMS;i++){
+             cumError[i] = 0;
+        }
+      }
+
       for(int i=0;i<NUM_PARAMS;i++){
            setpoints_old[i] = setpoints[i];
       }
