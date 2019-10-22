@@ -70,7 +70,7 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT}, setpoints_old[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT};
 
 //PID Vars
-float kP[4] = {1.9,1.9,1.9,1.9};
+float kP[4] = {2.2,2.2,2.2,2.2};
 // float kI[4] = {0,0,0,0};
 float kI[4] = {0.2,.2,.2,.2};
 float kD[4] = {0.8,0.8,0.8,0.8};
