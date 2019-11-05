@@ -70,10 +70,10 @@ Analog_Pot pot3(pot_3,range_m,range_M);
 int setpoints[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT}, setpoints_old[NUM_PARAMS] = {MIDPOINT,MIDPOINT,MIDPOINT,MIDPOINT};
 
 //PID Vars
-float kP[4] = {2.2,2.2,2.2,2.2};
-// float kI[4] = {0,0,0,0};
-float kI[4] = {0.2,.2,.2,.2};
-float kD[4] = {0.8,0.8,0.8,0.8};
+float kP[4] = {2.4,2.4,2.4,2.4};
+float kI[4] = {0,0,0,0};
+// float kI[4] = {0.2,.2,.2,.2};
+float kD[4] = {.9,.9,.9,.9};
 
 float deadband = 7.0;
 
@@ -101,22 +101,21 @@ int Error_Hist(float Error, float* Error_Hist, int hist_size, int _iter, float _
 float average(float* arr, int len);
 
 void setup() {
-  // Serial.begin(BAUD_RATE);
-  // pinMode(13,OUTPUT);
-  // delay(5000);
-  // digitalWrite(13,HIGH);
-  // delay(500);
-  // digitalWrite(13,LOW);
-  // delay(100);
-  // digitalWrite(13,HIGH);
-  // delay(100);
-  // digitalWrite(13,LOW);
-  // delay(800);
-  // digitalWrite(13,HIGH);
-  // delay(500);
-  // digitalWrite(13,LOW);
-  //Serial.println("Initialized");
-
+  Serial.begin(BAUD_RATE);
+  pinMode(13,OUTPUT);
+  delay(5000);
+  digitalWrite(13,HIGH);
+  delay(500);
+  digitalWrite(13,LOW);
+  delay(100);
+  digitalWrite(13,HIGH);
+  delay(100);
+  digitalWrite(13,LOW);
+  delay(800);
+  digitalWrite(13,HIGH);
+  delay(500);
+  digitalWrite(13,LOW);
+  Serial.println("Initialized");
 }
 
 void loop() {
@@ -187,19 +186,19 @@ void loop() {
 
       // Serial.print("output flag: ");
       // Serial.println(out0_flag);
-      Serial.print("Elapsed Time: ");
-      Serial.println(elapsedTime[2]);
-      Serial.print("Setpoint and State: ");
-      Serial.print(setpoints[2]);
-      Serial.print(",");
-      Serial.println(pot2.GetVal());
-      Serial.print("Error: ");
-      Serial.println(error[2]);
-      Serial.print("Cumulative Error: ");
-      Serial.println(cumError[2]);
-      Serial.print("Output: ");
-      Serial.println(output2);
-      Serial.println();
+      // Serial.print("Elapsed Time: ");
+      // Serial.println(elapsedTime[2]);
+      // Serial.print("Setpoint and State: ");
+      // Serial.print(setpoints[2]);
+      // Serial.print(",");
+      // Serial.println(pot2.GetVal());
+      // Serial.print("Error: ");
+      // Serial.println(error[2]);
+      // Serial.print("Cumulative Error: ");
+      // Serial.println(cumError[2]);
+      // Serial.print("Output: ");
+      // Serial.println(output2);
+      // Serial.println();
       delay(1000/PID_FREQ);
     }
   }
@@ -214,7 +213,10 @@ float computePID(int setpoint, int state, int channel,float _deadband){
   elapsedTime[channel] = (currentTime[channel]-previousTime[channel])/1000;
 
   error[channel] = float(setpoint - state);
-  if(abs(error[channel]) <= _deadband){ error[channel] = 0;}
+  if(abs(error[channel]) <= _deadband){
+    error[channel] = 0;
+    Serial.println("settled");
+  }
   //else;
 
   cumError[channel] += error[channel]*elapsedTime[channel];
